@@ -15,10 +15,5 @@ namespace BangazonAPI.Models
         public string Description { get; set; }
         public int ProductTypeId { get; set; }
         public int CustomerId { get; set; }
-        
-        
-      
-        
-
     }
 }
