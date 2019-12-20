@@ -1,17 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System.Data;
-using Microsoft.Data.SqlClient;
-using BangazonAPI.Models;
+﻿using BangazonAPI.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BangazonAPI.Controllers
 {
-        [Route("api/[controller]")]
+    [Route("api/[controller]")]
         [ApiController]
         public class DepartmentController : ControllerBase
         {
@@ -77,42 +75,86 @@ namespace BangazonAPI.Controllers
                 {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
-                { 
+                {
                     if (include == "employees")
                     {
-                        cmd.CommandText = @"SELECT Id, Name, Budget FROM Department WHERE id = @id
-                                           LEFT JOIN 
-                                           ON Employee e";
+                        cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.DepartmentId, e.FirstName,
+                                            e.LastName, e.Id, e.ComputerId, e.Email, e.IsSupervisor FROM Department d
+                                            LEFT JOIN Employee e ON d.Id = e.DepartmentId";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+                        List<Employee> employees = new List<Employee>();
+                        
+                        Department department = null;
+
+                        Employee employee = null;
+
+                        if (reader.Read())
+                        {
+                            employee = new Employee
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                Email = reader.GetString(reader.GetOrdinal("Email")),
+                                ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                                IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
+                            };
+
+                            employees.Add(employee);
+
+
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+
+                                Employees = employees
+                            };
+                        }
+
+                        reader.Close();
+
+                        if (department == null)
+                        {
+                            return NotFound($"No Department found with the Id of {id}");
+                        }
+
+                        return Ok(department);
                     }
 
                     else
-
-                    cmd.CommandText = "SELECT Id, Name, Budget FROM Department WHERE id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-                    Department department = null;
-
-                    if (reader.Read())
                     {
-                        department = new Department
+                        cmd.CommandText = "SELECT Id, Name, Budget FROM Department WHERE id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+                        Department department = null;
+
+                        if (reader.Read())
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-                        };
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
+                            };
+                        }
+
+                        reader.Close();
+
+                        if (department == null)
+                        {
+                            return NotFound($"No Department found with the Id of {id}");
+                        }
+
+                        return Ok(department);
                     }
-
-                    reader.Close();
-
-                    if (department == null)
-                    {
-                        return NotFound($"No Department found with the Id of {id}");
-                    }
-
-                    return Ok(department);
                 }
             }
         }
