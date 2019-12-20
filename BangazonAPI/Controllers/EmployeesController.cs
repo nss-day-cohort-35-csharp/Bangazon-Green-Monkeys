@@ -32,43 +32,53 @@ namespace BangazonAPI.Controllers
         }
 
         /// <summary>
-        /// Get all Employees
+        /// Query database to find employees by firstname and lastname
+        /// Get all employees
         /// </summary>
-        /// <returns> A list of employees </returns>
-        //[HttpGet]
-        //public async Task<IActionResult> GetAllEmployees()
-        //{
-        //    using (SqlConnection conn = Connection)
-        //    {
-        //        conn.Open();
-        //        using (SqlCommand cmd = conn.CreateCommand())
-        //        {
-        //            cmd.CommandText = @"SELECT Id, FirstName, LastName, DepartmentId, Email, 
-        //                                ComputerId, IsSupervisor FROM Employee";
-        //            SqlDataReader reader = await cmd.ExecuteReaderAsync();
-        //            List<Employee> employees = new List<Employee>();
+        /// <returns> A list of Students </returns>
+        [HttpGet]
+        public async Task<IActionResult> GetBySearch([FromQuery] string searchName)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT Id, FirstName, LastName, 
+                                       DepartmentId, Email, ComputerId, IsSupervisor
+                                       FROM Employee";
 
-        //            while (reader.Read())
-        //            {
-        //                Employee employee = new Employee
-        //                {
-        //                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        //                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-        //                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
-        //                    DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-        //                    Email = reader.GetString(reader.GetOrdinal("Email")),
-        //                    ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-        //                    IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"))
-        //                };
+                    if (!string.IsNullOrWhiteSpace(searchName))
+                    {
+                        cmd.CommandText += @" WHERE FirstName Like @searchName OR LastName LIKE @searchName";
+                        cmd.Parameters.Add(new SqlParameter("@searchName", "%" + searchName + "%"));
+                    }
 
-        //                employees.Add(employee);
-        //            }
-        //            reader.Close();
+                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    List<Employee> employees = new List<Employee>();
 
-        //            return Ok(employees);
-        //        }
-        //    }
-        //}
+                    while (reader.Read())
+                    {
+                        Employee employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                            Email = reader.GetString(reader.GetOrdinal("Email")),
+                            ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                            IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"))
+                        };
+
+                        employees.Add(employee);
+                    }
+                    reader.Close();
+
+                    return Ok(employees);
+                }
+            }
+        }
+
 
         /// <summary>
         /// Get Employee By Id
@@ -204,53 +214,6 @@ namespace BangazonAPI.Controllers
                 else
                 {
                     throw;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Query database to find employees by firstname and lastname
-        /// </summary>
-        /// <returns> A list of Students </returns>
-        [HttpGet]
-        public async Task<IActionResult> GetBySearch([FromQuery] string searchName)
-        {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"SELECT Id, FirstName, LastName, 
-                                       DepartmentId, Email, ComputerId, IsSupervisor
-                                       FROM Employee WHERE 1=1";
-
-                    if (!string.IsNullOrWhiteSpace(searchName))
-                    {
-                        cmd.CommandText += " AND FirstName Like @searchName OR LastName LIKE @searchName";
-                        cmd.Parameters.Add(new SqlParameter(searchName, "%" + searchName + "%"));
-                    }
-
-                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
-                    List<Employee> employees = new List<Employee>();
-
-                    while (reader.Read())
-                    {
-                        Employee employee = new Employee
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-                            Email = reader.GetString(reader.GetOrdinal("Email")),
-                            ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-                            IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"))
-                        };
-
-                        employees.Add(employee);
-                    }
-                    reader.Close();
-
-                    return Ok(employees);
                 }
             }
         }
