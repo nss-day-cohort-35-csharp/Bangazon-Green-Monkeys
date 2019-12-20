@@ -28,16 +28,104 @@ namespace BangazonAPI.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "GetOrders")] //Code for getting a order by orderid
-        public async Task<IActionResult> Get([FromRoute] int id, int? customerId)
+        [HttpGet(Name = "GetCustomerOrders")] //Code for getting a order by orderid
+        public async Task<IActionResult> Get([FromQuery] int? customerId)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                   // if (customerId == customerId)
-                    //{
+                    {
+                        if (customerId != null)
+                        {
+                            cmd.CommandText = @"SELECT 
+                                          o.Id AS OrderId,
+                                          o.CustomerId AS OrderCustomerId,
+                                          o.UserPaymentTypeId,
+                                          op.Id,
+                                          op.ProductId,
+                                          p.ProductTypeId,
+                                          p.DateAdded,
+                                          p.[Description],
+                                          p.Title,
+                                          p.CustomerId,
+                                          p.Price,
+                                          p.Id
+
+                                          FROM [Order] o
+                                          LEFT JOIN OrderProduct op ON o.Id = op.OrderId
+                                          LEFT JOIN Product p ON op.ProductId = p.Id
+                                          WHERE o.CustomerId = @CustomerId";
+
+                            cmd.Parameters.Add(new SqlParameter("@CustomerId", customerId));
+                            SqlDataReader reader = cmd.ExecuteReader();
+
+                            List<Product> products = new List<Product>();
+                            List<Order> orders = new List<Order>();
+                            Order order = null;
+
+                            if (reader.Read())
+                            {
+                                Product product = new Product
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                    DateAdded = reader.GetDateTime(reader.GetOrdinal("DateAdded")),
+                                    Description = reader.GetString(reader.GetOrdinal("Description")),
+                                    Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                                    ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                                    Title = reader.GetString(reader.GetOrdinal("Title"))
+                                };
+
+                                products.Add(product);
+
+                                var hasUserPaymentId = !reader.IsDBNull(reader.GetOrdinal("UserPaymentTypeId"));
+
+                                // Userpayment is NUll if it is not null do what I Am doing ISDBNUll
+                                if (hasUserPaymentId)
+                                {
+                                    order = new Order
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                                        CustomerId = reader.GetInt32(reader.GetOrdinal("OrderCustomerId")),
+                                        UserPaymentId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
+                                        Products = products
+                                    };
+                                    orders.Add(order);
+                                    reader.Close();
+                                    return Ok(orders);
+
+                                }
+                                else
+                                {
+                                    order = new Order
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                        // UserPaymentTypeId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
+                                        Products = products
+                                    };
+                                }
+                            }
+                            reader.Close();
+                            return Ok(order);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        [HttpGet("{id}", Name = "GetOrders")] //Code for getting a order by orderid
+        public async Task<IActionResult> Get([FromRoute] int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    {
                         cmd.CommandText = @"SELECT 
                                           o.Id AS OrderId,
                                           o.CustomerId,
@@ -52,58 +140,60 @@ namespace BangazonAPI.Controllers
                                           FROM [Order] o
                                           LEFT JOIN Product p ON o.CustomerId = p.Id
                                           WHERE 1=1";
-                    //}
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
+
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        SqlDataReader reader = cmd.ExecuteReader();
 
 
-                    List<Product> products = new List<Product>();
-                    Order order = null;
+                        List<Product> products = new List<Product>();
+                        Order order = null;
 
-                    if (reader.Read())
-                    {
-                        Product product = new Product
+                        if (reader.Read())
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
-                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                            DateAdded = reader.GetDateTime(reader.GetOrdinal("DateAdded")),
-                            Description = reader.GetString(reader.GetOrdinal("Description")),
-                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
-                            Title = reader.GetString(reader.GetOrdinal("Title"))
-                        };
-
-                        products.Add(product);
-
-                        var hasUserPaymentId = !reader.IsDBNull(reader.GetOrdinal("UserPaymentTypeId"));
-
-                        // Userpayment is NUll if it is not null do what I Am doing ISDBNUll
-                        if (hasUserPaymentId)
-                        {
-                            order = new Order
+                            Product product = new Product
                             {
-                                Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                                Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
                                 CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                                UserPaymentTypeId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
-                                Products = products
+                                DateAdded = reader.GetDateTime(reader.GetOrdinal("DateAdded")),
+                                Description = reader.GetString(reader.GetOrdinal("Description")),
+                                Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                                ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                                Title = reader.GetString(reader.GetOrdinal("Title"))
                             };
 
-                        } else {
-                           
-                            
-                            order = new Order
+                            products.Add(product);
+
+                            var hasUserPaymentId = !reader.IsDBNull(reader.GetOrdinal("UserPaymentTypeId"));
+
+                            // Userpayment is NUll if it is not null do what I Am doing ISDBNUll
+                            if (hasUserPaymentId)
                             {
-                                Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
-                                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                                // UserPaymentTypeId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
-                                Products = products
-                            };
+                                order = new Order
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                                    CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                    UserPaymentId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
+                                    Products = products
+                                };
+
+                            }
+                            else
+                            {
+                                order = new Order
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                                    CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                    // UserPaymentTypeId = reader.GetInt32(reader.GetOrdinal("UserPaymentTypeId")),
+                                    Products = products
+                                };
+                            }
                         }
+                        reader.Close();
+                        return Ok(order);
                     }
-                    reader.Close();
-                    return Ok(order);
                 }
             }
         }
     }
 }
+
