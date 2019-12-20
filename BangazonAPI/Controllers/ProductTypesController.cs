@@ -73,39 +73,7 @@ namespace BangazonAPI.API.Controllers
         /// </summary>
         /// <returns>Product type by id.</returns>
 
-        // [HttpGet("{id}", Name = "GetProductType")]
-        //public async Task<IActionResult> GetProductTypeById([FromRoute]int id, string include)
-        //{
-        //    using (SqlConnection conn = Connection)
-        //    {
-        //        conn.Open();
-        //        using (SqlCommand cmd = conn.CreateCommand())
-        //        {
-        //            cmd.CommandText = "SELECT Id AS ProductId, Name AS ProductName FROM ProductType WHERE Id = @id";
-        //            cmd.Parameters.Add(new SqlParameter("@id", id));
-        //            SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-        //            ProductType productType = null;
-
-        //            if (reader.Read())
-        //            {
-        //                productType = new ProductType
-        //                {
-        //                    Id = id,
-        //                    Name = reader.GetString(reader.GetOrdinal("ProductName"))
-
-        //                };
-        //            }
-        //            reader.Close();
-        //            if (productType == null)
-        //            {
-        //                return NotFound($"No product type found with the id {id}");
-        //            }
-        //            return Ok(productType);
-
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Get product type from database by id and includes products.
@@ -113,7 +81,7 @@ namespace BangazonAPI.API.Controllers
         /// <returns>Product type by id and includes products.</returns>
 
         [HttpGet("{id}")]
-        
+
         public async Task<IActionResult> GetProductTypeById(int id, string include)
         {
             if (include != null && include == "products")
@@ -131,7 +99,7 @@ namespace BangazonAPI.API.Controllers
                         cmd.Parameters.Add(new SqlParameter("@id", id));
                         SqlDataReader reader = await cmd.ExecuteReaderAsync();
                         List<ProductType> productTypes = new List<ProductType>();
-                        
+
                         while (reader.Read())
                         {
                             var productTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId"));
@@ -148,7 +116,7 @@ namespace BangazonAPI.API.Controllers
 
                                 };
                                 productTypes.Add(productType);
-                               
+
                                 {
                                     if (hasProduct)
                                     {
@@ -172,20 +140,20 @@ namespace BangazonAPI.API.Controllers
                             else
                             {
                                 if (hasProduct)
+                                {
+                                    Product product = new Product()
                                     {
-                                        Product product = new Product()
-                                        {
-                                            Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
-                                            DateAdded = reader.GetDateTime(reader.GetOrdinal("ProductDateAdded")),
-                                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
-                                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                                            Title = reader.GetString(reader.GetOrdinal("Title")),
-                                            Description = reader.GetString(reader.GetOrdinal("Description")),
-                                        };
-                                        productTypeAlreadyAdded.Products.Add(product);
-                                    }
-                                
+                                        Id = reader.GetInt32(reader.GetOrdinal("ProductId")),
+                                        DateAdded = reader.GetDateTime(reader.GetOrdinal("ProductDateAdded")),
+                                        ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                                        Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                                        Title = reader.GetString(reader.GetOrdinal("Title")),
+                                        Description = reader.GetString(reader.GetOrdinal("Description")),
+                                    };
+                                    productTypeAlreadyAdded.Products.Add(product);
+                                }
+
 
                             }
                         }
