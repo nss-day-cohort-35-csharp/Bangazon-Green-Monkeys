@@ -37,7 +37,7 @@ namespace BangazonAPI.Controllers
         /// </summary>
         /// <returns> A list of Students </returns>
         [HttpGet]
-        public async Task<IActionResult> GetBySearch([FromQuery] string searchName)
+        public async Task<IActionResult> GetBySearch([FromQuery] string firstName, string lastName)
         {
             using (SqlConnection conn = Connection)
             {
@@ -48,10 +48,15 @@ namespace BangazonAPI.Controllers
                                        DepartmentId, Email, ComputerId, IsSupervisor
                                        FROM Employee";
 
-                    if (!string.IsNullOrWhiteSpace(searchName))
+                    if (!string.IsNullOrWhiteSpace(firstName))
                     {
-                        cmd.CommandText += @" WHERE FirstName Like @searchName OR LastName LIKE @searchName";
-                        cmd.Parameters.Add(new SqlParameter("@searchName", "%" + searchName + "%"));
+                        cmd.CommandText += @" WHERE FirstName Like @firstName";
+                        cmd.Parameters.Add(new SqlParameter("@firstName", "%" + firstName + "%"));
+                    }
+                    if (!string.IsNullOrWhiteSpace(lastName))
+                    {
+                        cmd.CommandText += @" AND LastName Like @lastName";
+                        cmd.Parameters.Add(new SqlParameter("@lastName", "%" + lastName + "%"));
                     }
 
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
