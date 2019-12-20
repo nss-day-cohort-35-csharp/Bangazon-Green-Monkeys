@@ -258,7 +258,7 @@ namespace BangazonAPI.Controllers
             }
         }
         [HttpDelete("{id}")] //Code for deleting an exercise
-        public async Task<IActionResult> Delete([FromRoute] int id, [FromBody]Customer customer)
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
             try
             {
@@ -268,7 +268,7 @@ namespace BangazonAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE Customer SET Active = @Active WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@Active", customer.Active));
+                        cmd.Parameters.Add(new SqlParameter("@Active", false));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
