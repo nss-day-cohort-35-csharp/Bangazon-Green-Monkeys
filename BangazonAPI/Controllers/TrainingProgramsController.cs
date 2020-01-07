@@ -226,5 +226,166 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+        /// <summary>
+        /// Edit/Update Department in database
+        /// </summary>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] TrainingProgram trainingProgram)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE TrainingProgram 
+                                            SET Name = @name,
+                                                StartDate = @startDate,
+                                                EndDate = @endDate,
+                                                MaxAttendees = @maxAttendees
+                                            WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
+                        cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
+                        cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
+                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        return BadRequest($"No department with the id of {id}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                bool exists = await TrainingProgramExists(id);
+                if (!exists)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        [HttpDelete("{id}")] //Code for deleting an 
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                bool exists = await TrainingProgramExists(id);
+                if (!exists)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        [HttpDelete("{tpId/employees/{eId}")] //Code for deleting an 
+        public async Task<IActionResult> Delete([FromRoute] int tpId, [FromRoute] int eId)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM EmployeeTraining WHERE EmployeeId = @eId AND TrainingProgramId = @tpId";
+                        cmd.Parameters.Add(new SqlParameter("@id", eId));
+                        cmd.Parameters.Add(new SqlParameter("@id", tpId));
+                        
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                bool exists = await EmployeeTrainingExists(tpId, eId);
+                if (!exists)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+        private async Task<bool> TrainingProgramExists(int id)
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                        SELECT Id, [Name], StartDate, EndDate, MaxAttendees
+                        FROM TrainingPoogram
+                        WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                        return reader.Read();
+                    }
+                }
+            }
+        private async Task<bool> EmployeeTrainingExists(int tpId, int eId)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Id, EmployeeId, TrainingProgramId
+                        FROM EmployeeTraining
+                        WHERE EmployeeId = @eId AND TrainingProgramId = @tpId";
+                    
+                    cmd.Parameters.Add(new SqlParameter("@tpId", tpId));
+                    cmd.Parameters.Add(new SqlParameter("@eId", eId));
+
+                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    return reader.Read();
+                }
+            }
+        }
     }
-}
+
+    }
+

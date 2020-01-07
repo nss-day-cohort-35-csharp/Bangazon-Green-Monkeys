@@ -47,8 +47,6 @@ namespace BangazonAPI.Controllers
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
                     List<Department> departments = new List<Department>();
 
-                    List<Employee> employees = new List<Employee>();
-                    Employee employee = null;
 
                     while (reader.Read())
                     {
@@ -57,8 +55,10 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            Employees = employees
+                            Employees = new List<Employee>()
                         };
+
+                        
 
                         departments.Add(department);
 
