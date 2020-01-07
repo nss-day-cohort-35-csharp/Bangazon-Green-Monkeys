@@ -122,7 +122,7 @@ namespace BangazonAPI.Controllers
 
 
         ///// <summary>
-        ///// Get Employee By Id
+        ///// Get Computer By Id
         ///// </summary>
         ///// <param name="id"></param>
         ///// <returns> A single computer </returns>
@@ -166,9 +166,9 @@ namespace BangazonAPI.Controllers
 
 
         ///// <summary>
-        ///// Post new Employee to database
+        ///// Post new Computer to database
         ///// </summary>
-        ///// <param name="employee"></param>
+        ///// <param name="computer"></param>
         ///// <returns></returns>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Computer computer)
@@ -185,8 +185,16 @@ namespace BangazonAPI.Controllers
                     cmd.Parameters.Add(new SqlParameter("@Make", computer.Make));
                     cmd.Parameters.Add(new SqlParameter("@Model", computer.Model));
                     cmd.Parameters.Add(new SqlParameter("@PurchaseDate", computer.PurchaseDate));
-                    cmd.Parameters.Add(new SqlParameter("@DecomissionDate", computer.DecomissionDate));
+                    if (computer.DecomissionDate == null)
+                    {
+                        cmd.Parameters.Add(new SqlParameter("@DecomissionDate", DBNull.Value));
 
+                    }
+                    else
+                    {
+                        cmd.Parameters.Add(new SqlParameter("@DecomissionDate", computer.DecomissionDate));
+
+                    }
                     int newId = (int)await cmd.ExecuteScalarAsync();
                     computer.Id = newId;
                     return CreatedAtRoute("GetComputer", new { id = newId }, computer);
@@ -195,63 +203,104 @@ namespace BangazonAPI.Controllers
         }
 
         ///// <summary>
-        ///// Edit/Update Employee in database
+        ///// Edit/Update Computer in database
         /////</summary>
         ///// <param name="id"></param>
-        ///// <param name="employee"></param>
+        ///// <param name="computer"></param>
         ///// <returns></returns>
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> Put([FromRoute] int id, [FromBody] Employee employee)
-        //{
-        //    try
-        //    {
-        //        using (SqlConnection conn = Connection)
-        //        {
-        //            conn.Open();
-        //            using (SqlCommand cmd = conn.CreateCommand())
-        //            {
-        //                cmd.CommandText = @"UPDATE Employee
-        //                                    SET FirstName = @FirstName,
-        //                                        LastName = @LastName,
-        //                                        DepartmentId = @DepartmentId,
-        //                                        Email = @Email,
-        //                                        ComputerId = @ComputerId,
-        //                                        IsSupervisor = @IsSupervisor
-        //                                    WHERE Id = @id";
-        //                cmd.Parameters.Add(new SqlParameter("@id", id));
-        //                cmd.Parameters.Add(new SqlParameter("@FirstName", employee.FirstName));
-        //                cmd.Parameters.Add(new SqlParameter("@LastName", employee.LastName));
-        //                cmd.Parameters.Add(new SqlParameter("@DepartmentId", employee.DepartmentId));
-        //                cmd.Parameters.Add(new SqlParameter("@Email", employee.Email));
-        //                cmd.Parameters.Add(new SqlParameter("@ComputerId", employee.ComputerId));
-        //                cmd.Parameters.Add(new SqlParameter("@IsSupervisor", employee.IsSupervisor));
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] Computer computer)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"UPDATE Computer
+                                            SET Make = @Make,
+                                                Model = @Model,
+                                                PurchaseDate = @PurchaseDate,
+                                                DecomissionDate = @DecomissionDate
+                                            WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        cmd.Parameters.Add(new SqlParameter("@Make", computer.Make));
+                        cmd.Parameters.Add(new SqlParameter("@Model", computer.Model));
+                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", computer.PurchaseDate));
+                        if (computer.DecomissionDate == null)
+                        {
+                            cmd.Parameters.Add(new SqlParameter("@DecomissionDate", DBNull.Value));
 
-        //                int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        //                if (rowsAffected > 0)
-        //                {
-        //                    return new StatusCodeResult(StatusCodes.Status204NoContent);
-        //                }
-        //                return BadRequest($"No employee with the Id {id}");
-        //            }
-        //        }
-        //    }
-        //    catch (Exception)
-        //    {
-        //        bool exists = await EmployeeExists(id);
-        //        if (!exists)
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-        //}
+                        }
+                        else
+                        {
+                            cmd.Parameters.Add(new SqlParameter("@DecomissionDate", computer.DecomissionDate));
+
+                        }
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        return BadRequest($"No computer with the Id {id}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                bool exists = await ComputerExists(id);
+                if (!exists)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        [HttpDelete("{id}")] //Code for deleting a computer
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM Computer WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!await ComputerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
 
 
         /// <summary>
-        /// Private method to see if an employee exists
+        /// Private method to see if an computer exists
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -263,8 +312,8 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                SELECT Id, FirstName, LastName, DepartmentId, Email, ComputerId, IsSupervisor
-                FROM Employee
+                SELECT Id, Make, Model, PurchaseDate, DecomissionDate
+                FROM Computer
                 WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
