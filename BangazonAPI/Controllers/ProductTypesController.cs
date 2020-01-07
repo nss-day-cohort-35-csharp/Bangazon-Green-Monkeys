@@ -263,6 +263,8 @@ namespace BangazonAPI.API.Controllers
             }
         }
 
+
+
         private bool ProductTypeExists(int id)
         {
             using (SqlConnection conn = Connection)
