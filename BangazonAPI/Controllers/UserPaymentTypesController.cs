@@ -8,7 +8,7 @@ using System.Data;
 using BangazonAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
-//using System.Data.SqlClient;
+
 
 namespace BangazonAPI.Controllers
 {
@@ -31,8 +31,9 @@ namespace BangazonAPI.Controllers
                 return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             }
         }
-        [HttpGet("{id}", Name = "GetUserPayment")]
-        public async Task<IActionResult> Get([FromRoute] int id)
+
+        [HttpGet(Name = "GetUserPayment")]
+        public async Task<IActionResult> Get([FromQuery]int? customerId)
         {
             using (SqlConnection conn = Connection)
             {
@@ -41,36 +42,41 @@ namespace BangazonAPI.Controllers
                 {
                     cmd.CommandText = @"
 SELECT 
-Id, AccountNumber, Active, CustomerId, PaymentTypeId
+Id, AcctNumber, Active, CustomerId, PaymentTypeId
 FROM UserPaymentType
-WHERE Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
+WHERE CustomerId = @CustomerId";
 
-                    UserPaymentType userPaymentType = null;
+                    //dylan recording minute 2:45 1/7/20
+                    cmd.Parameters.Add(new SqlParameter("@CustomerId", customerId));
+                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    List<UserPaymentType> userPaymentTypes = new List<UserPaymentType>();
 
-                    if (reader.Read())
+
+                    while (reader.Read())
                     {
-                        userPaymentType = new UserPaymentType
+                        UserPaymentType userPaymentType = new UserPaymentType()
                         {
+
+
+
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                             PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId")),
-                            AccountNumber = reader.GetString(reader.GetOrdinal("AccountNumber")),
+                            AcctNumber = reader.GetString(reader.GetOrdinal("AcctNumber")),
                             Active = reader.GetBoolean(reader.GetOrdinal("Active"))
                         };
-
+                        userPaymentTypes.Add(userPaymentType);
                     }
                     reader.Close();
 
-                    if (userPaymentType == null)
-                    {
-                        return NotFound($"No user payment found with Id of: {id}");
-                    };
-                    return Ok(userPaymentType);
+                    return Ok(userPaymentTypes);
+
+           
                 }
             }
         }
+
+
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] UserPaymentType userPaymentType)
@@ -81,10 +87,10 @@ WHERE Id = @id";
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
 
-                    cmd.CommandText = @"INSERT INTO UserPaymentType (AccountNumber, Active, CustomerId, PaymentTypeId)
+                    cmd.CommandText = @"INSERT INTO UserPaymentType (AcctNumber, Active, CustomerId, PaymentTypeId)
 OUTPUT INSERTED.Id
-VALUES (@accountNumber, @active, @customerId, @paymentTypeId)";
-                    cmd.Parameters.Add(new SqlParameter("@accountNumber", userPaymentType.AccountNumber));
+VALUES (@acctNumber, @active, @customerId, @paymentTypeId)";
+                    cmd.Parameters.Add(new SqlParameter("@acctNumber", userPaymentType.AcctNumber));
                     cmd.Parameters.Add(new SqlParameter("@active", userPaymentType.Active));
                     cmd.Parameters.Add(new SqlParameter("@customerId", userPaymentType.CustomerId));
                     cmd.Parameters.Add(new SqlParameter("@paymentTypeId", userPaymentType.PaymentTypeId));
@@ -108,14 +114,14 @@ VALUES (@accountNumber, @active, @customerId, @paymentTypeId)";
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"UPDATE UserPaymentType
-                                            SET AccountNumber = @accountNumber,
+                                            SET AcctNumber = @acctNumber,
                                                 Active = @active 
                                                 WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@accountNumber", userPaymentType.AccountNumber));
+                        cmd.Parameters.Add(new SqlParameter("@acctNumber", userPaymentType.AcctNumber));
                         cmd.Parameters.Add(new SqlParameter("@active", userPaymentType.Active));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
@@ -153,7 +159,7 @@ VALUES (@accountNumber, @active, @customerId, @paymentTypeId)";
                                             WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
@@ -184,7 +190,7 @@ VALUES (@accountNumber, @active, @customerId, @paymentTypeId)";
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        SELECT Id, AccountNumber, Active
+                        SELECT Id, AcctNumber, Active
                         FROM UserPaymentType
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));

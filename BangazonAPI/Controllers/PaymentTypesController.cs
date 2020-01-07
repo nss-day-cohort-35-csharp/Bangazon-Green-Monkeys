@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace BangazonAPI.Controllers
 {
@@ -111,7 +111,7 @@ namespace BangazonAPI.Controllers
         }
 
         [HttpPost]
-    public async Task<IActionResult> Post([FromBody] PaymentType payment)
+        public async Task<IActionResult> Post([FromBody] PaymentType payment)
         {
             using (SqlConnection conn = Connection)
             {
@@ -132,8 +132,8 @@ VALUES (@name, @active)";
         }
 
 
-       [HttpDelete("{id}")]
-       public async Task<IActionResult> DeletePaymentType([FromRoute] int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePaymentType([FromRoute] int id)
         {
             try
             {
@@ -189,4 +189,3 @@ WHERE Id = @id";
         }
     }
 }
-
