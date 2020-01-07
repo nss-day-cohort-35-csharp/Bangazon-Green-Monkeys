@@ -20,8 +20,12 @@
     "BangazonAPI": {
       "commandName": "Project",
       "launchBrowser": true,
+<<<<<<< HEAD
       "launchUrl": "api/PaymentTypes",
 
+=======
+      "launchUrl": "api/Computers",
+>>>>>>> 15fa81b5e9223e5a3b3269f39be34223ea73c627
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
