@@ -52,7 +52,7 @@ namespace BangazonAPI.Controllers
                     {
                         ProductTypeRevenue productTypeRevenue = new ProductTypeRevenue()
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
                             ProductTypeName = reader.GetString(reader.GetOrdinal("ProductType")),
                             TotalRevenue = reader.GetDecimal(reader.GetOrdinal("TotalRevenue")),
 
