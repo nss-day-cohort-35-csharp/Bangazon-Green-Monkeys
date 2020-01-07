@@ -29,9 +29,13 @@ namespace BangazonAPI.Controllers
         }
 
         /// <summary>
+
         /// get all training programs
+
         /// </summary>
+
         [HttpGet]
+
         public async Task<IActionResult> GetAllTrainingPrograms([FromQuery] string programs)
         {
             using (SqlConnection conn = Connection)
@@ -40,12 +44,12 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT Id, Name, StartDate, EndDate, MaxAttendees FROM TrainingProgram";
-
-
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
                     List<TrainingProgram> trainingPrograms = new List<TrainingProgram>();
 
                     while (reader.Read())
+
                     {
                         TrainingProgram trainingProgram = new TrainingProgram
                         {
@@ -59,111 +63,96 @@ namespace BangazonAPI.Controllers
                         trainingPrograms.Add(trainingProgram);
                     }
                     reader.Close();
-
                     return Ok(trainingPrograms);
                 }
             }
         }
 
         /// <summary>
-        /// Get Training Program By Id
+        /// Get  By Id
         /// </summary>
         /// 
-        //[HttpGet("{id}", Name = "GetTrainingPrograms")]
+        [HttpGet("{id}", Name = "TrainingProgram")]
 
-        //public async Task<IActionResult> GetTrainingProgramById([FromRoute] int id, [FromQuery]string include)
-        //{
-        //    using (SqlConnection conn = Connection)
-        //    {
-        //        conn.Open();
-        //        using (SqlCommand cmd = conn.CreateCommand())
-        //        {
-        //            if (include == "")
-        //            {
-        //                cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.DepartmentId, e.FirstName,
-        //                                    e.LastName, e.Id, e.ComputerId, e.Email, e.IsSupervisor FROM Department d
-        //                                    LEFT JOIN Employee e ON d.Id = e.DepartmentId";
-        //                cmd.Parameters.Add(new SqlParameter("@id", id));
-        //                SqlDataReader reader = await cmd.ExecuteReaderAsync();
+        public async Task<IActionResult> GetById([FromRoute] int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    if (id != null)
+                    {
+                        cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees
+                                            FROM TrainingProgram 
+                                            WHERE Id = @id";
 
-        //                List<Employee> employees = new List<Employee>();
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-        //                Department department = null;
+                        List<TrainingProgram> trainingPrograms = new List<TrainingProgram>();
 
-        //                Employee employee = null;
+                        TrainingProgram trainingProgram = null;
 
-        //                if (reader.Read())
-        //                {
-        //                    employee = new Employee
-        //                    {
-        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        //                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-        //                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
-        //                        Email = reader.GetString(reader.GetOrdinal("Email")),
-        //                        ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-        //                        DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-        //                        IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
-        //                    };
+                        if (reader.Read())
+                        {
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            };
 
-        //                    employees.Add(employee);
+                            trainingPrograms.Add(trainingProgram);
+                        }
 
+                        reader.Close();
 
-        //                    department = new Department
-        //                    {
-        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        //                        Name = reader.GetString(reader.GetOrdinal("Name")),
-        //                        Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                        if (trainingProgram == null)
+                        {
+                            return NotFound($"No Training Program found with the Id of {id}");
+                        }
 
-        //                        Employees = employees
-        //                    };
-        //                }
+                        return Ok(trainingProgram);
 
-        //                reader.Close();
+                    }
 
-        //                if (department == null)
-        //                {
-        //                    return NotFound($"No Department found with the Id of {id}");
-        //                }
-
-        //                return Ok(department);
-        //            }
-
-        //            else
-        //            {
-        //                cmd.CommandText = "SELECT Id, Name, Budget FROM Department WHERE id = @id";
-        //                cmd.Parameters.Add(new SqlParameter("@id", id));
+                    else
+                    {
+                        cmd.CommandText = "SELECT Id, Name, StartDate, EndDate, MaxAttendees FROM TrainingProgram WHERE id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
 
 
-        //                SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-        //                Department department = null;
+                        TrainingProgram trainingProgram = null;
 
-        //                if (reader.Read())
-        //                {
-        //                    department = new Department
-        //                    {
-        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        //                        Name = reader.GetString(reader.GetOrdinal("Name")),
-        //                        Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-        //                    };
-        //                }
+                        if (reader.Read())
+                        {
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            };
+                        }
 
-        //                reader.Close();
+                        reader.Close();
 
-        //                if (department == null)
-        //                {
-        //                    return NotFound($"No Department found with the Id of {id}");
-        //                }
+                        if (trainingProgram == null)
+                        {
+                            return NotFound($"No Department found with the Id of {id}");
+                        }
 
-        //                return Ok(department);
-        //            }
-        //        }
-        //    }
-        //}
-
-        /// <summary>
-        /// Post new Training Program to database
-        /// </summary>
+                        return Ok(trainingProgram);
+                    }
+                }
+            }
+        }
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] TrainingProgram trainingProgram)
         {
@@ -192,27 +181,50 @@ namespace BangazonAPI.Controllers
         /// </summary>
         /// 
         [HttpPost("{id}/employees")]
-        public async Task<IActionResult> Put([FromBody] TrainingProgram trainingProgram)
+        public async Task<IActionResult> Post([FromRoute] int id, [FromBody] Employee employee)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+
+                    //if statement
+                {
+                    cmd.CommandText = @"INSERT INTO EmployeeTraining (EmployeeId, TrainingProgramId) OUTPUT INSERTED.Id
+                                        VALUES (@EmployeeId, @TrainingProgramId)";
+
+                    cmd.Parameters.Add(new SqlParameter("@EmployeeId", employee.Id));
+                    cmd.Parameters.Add(new SqlParameter("@TrainingProgramId", id));
+
+                    //new Employee Training
+                    EmployeeTraining employeeTraining = new EmployeeTraining();
+     ;
+
+                    int newId = (int)await cmd.ExecuteScalarAsync();
+                    employeeTraining.Id = newId;
+                    return CreatedAtRoute("GetTrainingPrograms", new { id = newId }, employeeTraining);
+
+                    
+                }
+            }
+        }
+        private async Task<bool> EmployeeExists(int id)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"INSERT INTO TrainingProgram (Name, StartDate, EndDate, MaxAttendees) OUTPUT INSERTED.Id
-                                        VALUES (@Name, @StartDate, @EndDate, @MaxAttendees)";
+                    cmd.CommandText = @"
+                    SELECT *
+                    FROM Employee
+                    WHERE Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
 
-                    cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
-                    cmd.Parameters.Add(new SqlParameter("@StartDate", trainingProgram.StartDate));
-                    cmd.Parameters.Add(new SqlParameter("@EndDate", trainingProgram.EndDate));
-                    cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
-
-
-                    int newId = (int)await cmd.ExecuteScalarAsync();
-                    trainingProgram.Id = newId;
-                    return CreatedAtRoute("GetTrainingPrograms", new { id = newId }, trainingProgram);
+                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    return reader.Read();
                 }
-            } 
+            }
         }
     }
 }
