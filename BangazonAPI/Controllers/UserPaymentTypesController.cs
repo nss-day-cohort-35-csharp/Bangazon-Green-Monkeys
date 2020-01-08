@@ -115,10 +115,14 @@ VALUES (@acctNumber, @active, @customerId, @paymentTypeId)";
                     {
                         cmd.CommandText = @"UPDATE UserPaymentType
                                             SET AcctNumber = @acctNumber,
+                                                PaymentTypeId = @paymentTypeId,
+                                                CustomerId = @customerId,
                                                 Active = @active 
                                                 WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@acctNumber", userPaymentType.AcctNumber));
                         cmd.Parameters.Add(new SqlParameter("@active", userPaymentType.Active));
+                        cmd.Parameters.Add(new SqlParameter("@paymentTypeId", userPaymentType.PaymentTypeId));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", userPaymentType.CustomerId));
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
