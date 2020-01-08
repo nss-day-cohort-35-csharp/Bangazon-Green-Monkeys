@@ -32,161 +32,290 @@ namespace BangazonAPI.Controllers
         /// get all departments
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAllDepartments([FromQuery] string dept)
+        public async Task<IActionResult> GetAllDepartments()
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.Id AS EmployeeId, e.FirstName, e.LastName, 
-                                        e.DepartmentId, e.Email, e.ComputerId, e.IsSupervisor FROM Department d
-                                        LEFT JOIN Employee e ON e.DepartmentId = d.Id;";
-
-
+                    cmd.CommandText = @"SELECT Id, [Name] AS DepartmentName, Budget AS DepartmentBudget FROM Department";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
                     List<Department> departments = new List<Department>();
-
-
                     while (reader.Read())
                     {
                         Department department = new Department
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            Employees = new List<Employee>()
+                            Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                            Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget"))
                         };
-
-                        
-
                         departments.Add(department);
-
-                        if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
-                        {
-                            department.Employees.Add(new Employee()
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-                                Email = reader.GetString(reader.GetOrdinal("Email")),
-                                IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor")),
-                                ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId"))
-                            });
-                        }
                     }
-
-                    employees.Add(employee);
                     reader.Close();
                     return Ok(departments);
-                };
+                }
             }
-
         }
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllDepartments([FromQuery] string dept)
+        //{
+        //    using (SqlConnection conn = Connection)
+        //    {
+        //        conn.Open();
+        //        using (SqlCommand cmd = conn.CreateCommand())
+        //        {
+        //            cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.Id AS EmployeeId, e.FirstName, e.LastName, 
+        //                                e.DepartmentId, e.Email, e.ComputerId, e.IsSupervisor FROM Department d
+        //                                LEFT JOIN Employee e ON e.DepartmentId = d.Id;";
+
+
+        //            SqlDataReader reader = await cmd.ExecuteReaderAsync();
+        //            List<Department> departments = new List<Department>();
+
+
+        //            while (reader.Read())
+        //            {
+        //                Department department = new Department
+        //                {
+        //                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+        //                    Name = reader.GetString(reader.GetOrdinal("Name")),
+        //                    Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+        //                    Employees = new List<Employee>()
+        //                };
+
+
+
+        //                departments.Add(department);
+
+        //                if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
+        //                {
+        //                    department.Employees.Add(new Employee()
+        //                    {
+        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+        //                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+        //                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+        //                        DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+        //                        Email = reader.GetString(reader.GetOrdinal("Email")),
+        //                        IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor")),
+        //                        ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId"))
+        //                    });
+        //                }
+        //            }
+
+        //            employees.Add(employee);
+        //            reader.Close();
+        //            return Ok(departments);
+        //        };
+        //    }
+
+        //}
 
 
         /// <summary>
         /// Get Department By Id
         /// </summary>
         /// 
-        [HttpGet("{id}", Name = "GetDepartments")]
-
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery]string include)
         {
-            using (SqlConnection conn = Connection)
+            if (include != null && include == "employees")
             {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+                using (SqlConnection conn = Connection)
                 {
-                    if (id != null)
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.DepartmentId, e.FirstName,
-                                            e.LastName, e.Id, e.ComputerId, e.Email, e.IsSupervisor FROM Department d
+                        cmd.CommandText = @"SELECT d.Id AS DepartmentId, d.[Name] AS DepartmentName, d.Budget AS DepartmentBudget, e.DepartmentId AS EmployeeDepartmentId, e.FirstName AS EmployeeFirstName,
+                                            e.LastName AS EmployeeLastName, e.Id AS EmployeeId, e.ComputerId AS EmployeeComputerId, e.Email AS EmployeeEmail, e.IsSupervisor AS EmployeeSupervisor FROM Department d
                                             LEFT JOIN Employee e ON d.Id = e.DepartmentId
                                             WHERE d.Id = @id";
-
                         cmd.Parameters.Add(new SqlParameter("@id", id));
                         SqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-                        List<Employee> employees = new List<Employee>();
-
-                        Department department = null;
-
-                        Employee employee = null;
-
-                        if (reader.Read())
+                        List<Department> departments = new List<Department>();
+                        while (reader.Read())
                         {
-                            employee = new Employee
+                            var departmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"));
+                            var departmentAlreadyAdded = departments.FirstOrDefault(d => d.Id == departmentId);
+                            var hasEmployee = !reader.IsDBNull(reader.GetOrdinal("EmployeeId"));
+                            if (departmentAlreadyAdded == null)
                             {
-                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                                Email = reader.GetString(reader.GetOrdinal("Email")),
-                                ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
-                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-                                IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
-                            };
-
-                            employees.Add(employee);
-
-
-                            department = new Department
+                                Department department = new Department
+                                {
+                                    Id = departmentId,
+                                    Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                                    Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget")),
+                                    Employees = new List<Employee>()
+                                };
+                                departments.Add(department);
+                                {
+                                    if (hasEmployee)
+                                    {
+                                        Employee employee = new Employee()
+                                        {
+                                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                            FirstName = reader.GetString(reader.GetOrdinal("EmployeeFirstName")),
+                                            LastName = reader.GetString(reader.GetOrdinal("EmployeeLastName")),
+                                            DepartmentId = reader.GetInt32(reader.GetOrdinal("EmployeeDepartmentId")),
+                                            ComputerId = reader.GetInt32(reader.GetOrdinal("EmployeeComputerId")),
+                                            IsSupervisor = reader.GetBoolean(reader.GetOrdinal("EmployeeSupervisor")),
+                                            Email = reader.GetString(reader.GetOrdinal("EmployeeEmail"))
+                                        };
+                                        department.Employees.Add(employee);
+                                    }
+                                }
+                            }
+                            else
                             {
-                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                Name = reader.GetString(reader.GetOrdinal("Name")),
-                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-
-                                Employees = employees
-                            };
+                                Employee employee = new Employee()
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("EmployeeFirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("EmployeeLastName")),
+                                    DepartmentId = reader.GetInt32(reader.GetOrdinal("EmployeeDepartmentId")),
+                                    ComputerId = reader.GetInt32(reader.GetOrdinal("EmployeeComputerId")),
+                                    IsSupervisor = reader.GetBoolean(reader.GetOrdinal("EmployeeSupervisor")),
+                                    Email = reader.GetString(reader.GetOrdinal("EmployeeEmail"))
+                                };
+                                departmentAlreadyAdded.Employees.Add(employee);
+                            }
                         }
-
                         reader.Close();
-
-                        if (department == null)
-                        {
-                            return NotFound($"No Department found with the Id of {id}");
-                        }
-
-                        return Ok(department);
-
-                    }
-
-                    else
-                    {
-                        cmd.CommandText = "SELECT Id, Name, Budget FROM Department WHERE id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
-
-
-                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-                        Department department = null;
-
-                        if (reader.Read())
-                        {
-                            department = new Department
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                                Name = reader.GetString(reader.GetOrdinal("Name")),
-                                Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-                            };
-                        }
-
-                        reader.Close();
-
-                        if (department == null)
-                        {
-                            return NotFound($"No Department found with the Id of {id}");
-                        }
-
-                        return Ok(department);
-                    }
+                        return Ok(departments);
                     }
                 }
             }
-    /// <summary>
-    /// Post new Department to database
-    /// </summary>
+            else
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"SELECT d.Id AS DepartmentId, d.[Name] AS DepartmentName, d.Budget AS DepartmentBudget FROM Department d
+                                            WHERE d.Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                        Department department = null;
+                        if (reader.Read())
+                        {
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget")),
+                                Name = reader.GetString(reader.GetOrdinal("DepartmentName"))
+                            };
+                        }
+                        return Ok(department);
+                    }
+                }
+            }
+        }
+
+        //[HttpGet("{id}", Name = "GetDepartments")]
+
+        //public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery]string include)
+        //{
+        //    using (SqlConnection conn = Connection)
+        //    {
+        //        conn.Open();
+        //        using (SqlCommand cmd = conn.CreateCommand())
+        //        {
+        //            if (id != null)
+        //            {
+        //                cmd.CommandText = @"SELECT d.Id, d.[Name], d.Budget, e.DepartmentId, e.FirstName,
+        //                                    e.LastName, e.Id, e.ComputerId, e.Email, e.IsSupervisor FROM Department d
+        //                                    LEFT JOIN Employee e ON d.Id = e.DepartmentId
+        //                                    WHERE d.Id = @id";
+
+        //                cmd.Parameters.Add(new SqlParameter("@id", id));
+        //                SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+        //                List<Employee> employees = new List<Employee>();
+
+        //                Department department = null;
+
+        //                Employee employee = null;
+
+        //                if (reader.Read())
+        //                {
+        //                    employee = new Employee
+        //                    {
+        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+        //                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+        //                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+        //                        Email = reader.GetString(reader.GetOrdinal("Email")),
+        //                        ComputerId = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+        //                        DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+        //                        IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
+        //                    };
+
+        //                    employees.Add(employee);
+
+
+        //                    department = new Department
+        //                    {
+        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+        //                        Name = reader.GetString(reader.GetOrdinal("Name")),
+        //                        Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+
+        //                        Employees = employees
+        //                    };
+        //                }
+
+        //                reader.Close();
+
+        //                if (department == null)
+        //                {
+        //                    return NotFound($"No Department found with the Id of {id}");
+        //                }
+
+        //                return Ok(department);
+
+        //            }
+
+        //            else
+        //            {
+        //                cmd.CommandText = "SELECT Id, Name, Budget FROM Department WHERE id = @id";
+        //                cmd.Parameters.Add(new SqlParameter("@id", id));
+
+
+        //                SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+        //                Department department = null;
+
+        //                if (reader.Read())
+        //                {
+        //                    department = new Department
+        //                    {
+        //                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+        //                        Name = reader.GetString(reader.GetOrdinal("Name")),
+        //                        Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
+        //                    };
+        //                }
+
+        //                reader.Close();
+
+        //                if (department == null)
+        //                {
+        //                    return NotFound($"No Department found with the Id of {id}");
+        //                }
+
+        //                return Ok(department);
+        //            }
+        //            }
+        //        }
+        //    }
+
+
+
+        /// <summary>
+        /// Post new Department to database
+        /// </summary>
+
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Department department)
         {
