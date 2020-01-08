@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -112,7 +113,7 @@ namespace BangazonAPI.Controllers
         //    }
 
         //}
-
+  
 
         /// <summary>
         /// Get Department By Id
@@ -402,4 +403,6 @@ namespace BangazonAPI.Controllers
         }
     }
 }
+
+
 

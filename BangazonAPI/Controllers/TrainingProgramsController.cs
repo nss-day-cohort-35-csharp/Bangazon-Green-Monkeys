@@ -180,34 +180,34 @@ namespace BangazonAPI.Controllers
         /// Post new Training Program with Employee to database
         /// </summary>
         /// 
-        [HttpPost("{id}/employees")]
-        public async Task<IActionResult> Post([FromRoute] int id, [FromBody] Employee employee)
-        {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+     //   [HttpPost("{id}/employees")]
+     //   public async Task<IActionResult> Post([FromRoute] int id, [FromBody] Employee employee)
+     //   {
+     //       using (SqlConnection conn = Connection)
+     //       {
+     //           conn.Open();
+     //           using (SqlCommand cmd = conn.CreateCommand())
 
-                    //if statement
-                {
-                    cmd.CommandText = @"INSERT INTO EmployeeTraining (EmployeeId, TrainingProgramId) OUTPUT INSERTED.Id
-                                        VALUES (@EmployeeId, @TrainingProgramId)";
+     //               //if statement
+     //           {
+     //               cmd.CommandText = @"INSERT INTO EmployeeTraining (EmployeeId, TrainingProgramId) OUTPUT INSERTED.Id
+     //                                   VALUES (@EmployeeId, @TrainingProgramId)";
 
-                    cmd.Parameters.Add(new SqlParameter("@EmployeeId", employee.Id));
-                    cmd.Parameters.Add(new SqlParameter("@TrainingProgramId", id));
+     //               cmd.Parameters.Add(new SqlParameter("@EmployeeId", employee.Id));
+     //               cmd.Parameters.Add(new SqlParameter("@TrainingProgramId", id));
 
-                    //new Employee Training
-                    EmployeeTraining employeeTraining = new EmployeeTraining();
-     ;
+     //               //new Employee Training
+     //               EmployeeTraining employeeTraining = new EmployeeTraining();
+     //;
 
-                    int newId = (int)await cmd.ExecuteScalarAsync();
-                    employeeTraining.Id = newId;
-                    return CreatedAtRoute("GetTrainingPrograms", new { id = newId }, employeeTraining);
+     //               int newId = (int)await cmd.ExecuteScalarAsync();
+     //               employeeTraining.Id = newId;
+     //               return CreatedAtRoute("GetTrainingPrograms", new { id = newId }, employeeTraining);
 
                     
-                }
-            }
-        }
+     //           }
+     //       }
+     //   }
         private async Task<bool> EmployeeExists(int id)
         {
             using (SqlConnection conn = Connection)
