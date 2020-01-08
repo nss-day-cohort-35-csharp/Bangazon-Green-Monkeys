@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 namespace BangazonAPI
 {
@@ -19,9 +20,8 @@ namespace BangazonAPI
             Configuration = configuration;
         }
 
+        //set policy name to 
         readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -32,13 +32,16 @@ namespace BangazonAPI
                 options.AddPolicy(MyAllowSpecificOrigins,
                 builder =>
                 {
-                   Microsoft.AspNetCore.Cors.Infrastructure.CorsPolicyBuilder corsPolicyBuilder =
-                    builder.WithOrigins("http://bangazon.com",
-                                        "http://www.bangazon.com");
+                    Microsoft.AspNetCore.Cors.Infrastructure.CorsPolicyBuilder corsPolicyBuilder = builder.WithOrigins("http://www.bangazon.com", "http://bangazon.com");
                 });
             });
+
             services.AddControllers();
 
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,6 +51,14 @@ namespace BangazonAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseHsts();
+            }
+
+
+
+            app.UseHttpsRedirection();
 
             app.UseRouting();
 
